@@ -1,0 +1,59 @@
+const admin = require("firebase-admin");
+
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n") : "",
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+};
+
+let db;
+let auth;
+let storage;
+let FieldValue;
+let Timestamp;
+
+// Use mock Firestore in development or when explicitly enabled
+const useMock = process.env.USE_MOCK_FIRESTORE === "true" || process.env.NODE_ENV === "development";
+
+if (useMock) {
+  console.log("🔥 [SamajConnect] Using local JSON file mock database...");
+  const mock = require("./mockFirestore");
+  db = mock.db;
+  FieldValue = mock.FieldValue;
+  Timestamp = mock.Timestamp;
+  
+  // Mock Firebase Auth verifyIdToken for dev offline mode
+  auth = {
+    verifyIdToken: async (token) => {
+      const cleanToken = token.replace("mock-jwt-token-", "");
+      if (cleanToken === "priya") {
+        return { uid: "user_priya_002", email: "priya@example.com", name: "Priya Deshmukh" };
+      } else if (cleanToken === "ramesh") {
+        return { uid: "user_ramesh_003", email: "ramesh@example.com", name: "Ramesh Patil" };
+      }
+      return { uid: "user_sarthak_001", email: "sarthak@example.com", name: "Sarthak Kulkarni" };
+    }
+  };
+  
+  // Mock storage bucket helpers
+  storage = {
+    bucket: () => ({ name: "local-mock-bucket" })
+  };
+} else {
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    });
+  }
+  db = admin.firestore();
+  auth = admin.auth();
+  storage = admin.storage();
+  FieldValue = admin.firestore.FieldValue;
+  Timestamp = admin.firestore.Timestamp;
+}
+
+module.exports = { admin, db, auth, storage, FieldValue, Timestamp };
+
+

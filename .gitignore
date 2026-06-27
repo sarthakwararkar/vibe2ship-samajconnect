@@ -1,0 +1,46 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+samajconnectfrontend/.env
+samajconnectbackend/.env
+**/.env
+**/.env.*
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production builds
+dist/
+build/
+out/
+**/dist/
+**/build/
+
+# Local database and uploads
+samajconnectbackend/db_local/
+samajconnectbackend/public/uploads/
+**/db_local/
+**/uploads/
+
+# System / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Firebase Service Accounts
+*firebase-adminsdk*.json
+
+# Keys and certificates
+*.pem
+*.key
+*.pub
