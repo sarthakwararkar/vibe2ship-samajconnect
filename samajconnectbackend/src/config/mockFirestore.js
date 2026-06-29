@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const DB_DIR = path.join(__dirname, "../../db_local");
+const DB_DIR = process.env.NODE_ENV === "production" 
+  ? "/tmp/db_local" 
+  : path.join(__dirname, "../../db_local");
 
 // Helper to read JSON file
 function readData(collection) {
