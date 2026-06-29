@@ -1,0 +1,14 @@
+node_modules
+samajconnectbackend/node_modules
+samajconnectfrontend/node_modules
+samajconnectbackend/db_local
+samajconnectbackend/public/uploads
+dist
+samajconnectfrontend/dist
+.git
+.gitignore
+.env
+samajconnectbackend/.env
+samajconnectfrontend/.env
+samajconnet-firebase-adminsdk-*.json
+mock_key.pem

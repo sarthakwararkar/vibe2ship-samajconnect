@@ -26,6 +26,9 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Static files for local disk uploads
 app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
 
+// Serve frontend built files (production)
+app.use(express.static(path.join(__dirname, "../public/dist")));
+
 
 // Rate limiting on all routes
 app.use("/api/", apiLimiter);
@@ -47,6 +50,18 @@ app.use("/api/hub",         require("./routes/hub.routes"));
 app.use("/api/marketplace", require("./routes/marketplace.routes"));
 app.use("/api/trust",       require("./routes/trust.routes"));
 app.use("/api/dashboard",   require("./routes/dashboard.routes"));
+
+// SPA fallback: serve frontend index.html for any non-API, non-upload routes
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, "../public/dist/index.html"), (err) => {
+    if (err) {
+      next();
+    }
+  });
+});
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: "Route not found", code: "NOT_FOUND" }));
