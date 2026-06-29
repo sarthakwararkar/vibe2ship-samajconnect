@@ -41,17 +41,47 @@ if (useMock) {
     bucket: () => ({ name: "local-mock-bucket" })
   };
 } else {
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    });
+  try {
+    if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccount.private_key) {
+      throw new Error("Missing or incomplete Firebase Admin SDK credentials in environment variables.");
+    }
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      });
+    }
+    db = admin.firestore();
+    auth = admin.auth();
+    storage = admin.storage();
+    FieldValue = admin.firestore.FieldValue;
+    Timestamp = admin.firestore.Timestamp;
+    console.log("🔥 [SamajConnect] Successfully connected to live Firebase / Firestore database!");
+  } catch (err) {
+    console.warn("⚠️ [SamajConnect] Live Firebase initialization failed, falling back to mock database:", err.message);
+    const mock = require("./mockFirestore");
+    db = mock.db;
+    FieldValue = mock.FieldValue;
+    Timestamp = mock.Timestamp;
+    
+    // Mock Firebase Auth verifyIdToken for dev offline mode
+    auth = {
+      verifyIdToken: async (token) => {
+        const cleanToken = token.replace("mock-jwt-token-", "");
+        if (cleanToken === "priya") {
+          return { uid: "user_priya_002", email: "priya@example.com", name: "Priya Deshmukh" };
+        } else if (cleanToken === "ramesh") {
+          return { uid: "user_ramesh_003", email: "ramesh@example.com", name: "Ramesh Patil" };
+        }
+        return { uid: "user_sarthak_001", email: "sarthak@example.com", name: "Sarthak Kulkarni" };
+      }
+    };
+    
+    // Mock storage bucket helpers
+    storage = {
+      bucket: () => ({ name: "local-mock-bucket" })
+    };
   }
-  db = admin.firestore();
-  auth = admin.auth();
-  storage = admin.storage();
-  FieldValue = admin.firestore.FieldValue;
-  Timestamp = admin.firestore.Timestamp;
 }
 
 module.exports = { admin, db, auth, storage, FieldValue, Timestamp };

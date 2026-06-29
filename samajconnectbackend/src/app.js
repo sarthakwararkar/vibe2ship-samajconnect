@@ -11,7 +11,48 @@ const app = express();
 
 // Security + logging
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: [
+        "'self'",
+        "https://nominatim.openstreetmap.org",
+        "https://generativelanguage.googleapis.com",
+        "https://*.googleapis.com",
+        "https://*.firebaseapp.com",
+        "https://*.firebaseio.com"
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://*.openstreetmap.org",
+        "https://*.tile.openstreetmap.org",
+        "https://*.basemaps.cartocdn.com",
+        "https://server.arcgisonline.com",
+        "https://*.firebaseapp.com",
+        "https://*.firebasestorage.app",
+        "https://*.googleusercontent.com"
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://fonts.googleapis.com",
+        "https://unpkg.com"
+      ],
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com"
+      ],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://unpkg.com"
+      ]
+    }
+  }
 }));
 app.use(morgan("dev"));
 app.use(cors({
