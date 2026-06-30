@@ -28,8 +28,8 @@ function parseGeminiJSON(text) {
 
 async function callWithFallback(prompt, isMultimodal = false, imageBase64 = null, mimeType = "image/jpeg") {
   const models = isMultimodal 
-    ? ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro-vision"]
-    : ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
+    ? ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"]
+    : ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
     
   let lastError = null;
   let cleanImageBase64 = null;
@@ -61,13 +61,10 @@ async function callWithFallback(prompt, isMultimodal = false, imageBase64 = null
       }
       return parseGeminiJSON(result.response.text());
     } catch (err) {
-      const msg = (err.message || "").toLowerCase();
-      if (msg.includes("not found") || msg.includes("404") || msg.includes("not supported") || msg.includes("unsupported")) {
-        console.warn(`Backend Model ${modelName} failed or not found, trying next...`, err.message);
-        lastError = err;
-        continue;
-      }
-      throw err;
+      console.warn(`Gemini model ${modelName} failed: ${err.message?.slice(0, 120)}`);
+      lastError = err;
+      // Try the next model for ANY error (404, 429, quota, 503, etc.)
+      continue;
     }
   }
   throw lastError;

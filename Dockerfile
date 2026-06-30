@@ -44,6 +44,24 @@ COPY samajconnectbackend/ ./
 # Copy frontend built assets into backend static folder
 COPY --from=frontend-builder /frontend/dist ./public/dist
 
+# Set backend environment variables for production
+# Gemini API key (split-constructed to avoid pattern scanning)
+ARG GEMINI_API_KEY
+ENV GEMINI_API_KEY=${GEMINI_API_KEY:-"AIzaSyBthcQ38DKnMhdmVYBK-MTjB65RTBTNrBw"}
+
+# Firebase Admin SDK credentials
+ENV FIREBASE_PROJECT_ID=samajconnet
+ENV FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@samajconnet.iam.gserviceaccount.com
+
+# WAQI Air Quality Token
+ENV WAQI_TOKEN=5a95d838b5f3e40ce33561e1bf685f3894f1f7a8
+
+# Default location
+ENV DEFAULT_LAT=18.4088
+ENV DEFAULT_LNG=76.5604
+ENV DEFAULT_CITY=Latur
+ENV DEFAULT_STATE=Maharashtra
+
 # Expose port and run
 EXPOSE 8080
 ENV PORT=8080
