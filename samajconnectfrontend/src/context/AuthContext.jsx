@@ -44,10 +44,10 @@ export function AuthProvider({ children }) {
         }
         setLoading(false);
       } else {
-        // Dev Auto-Login: If no active Firebase session and they didn't explicitly log out,
+        // Dev Auto-Login: ONLY in development, if no active Firebase session and they didn't explicitly log out,
         // log in automatically as Sarthak (user_sarthak_001)
         const isLoggedOut = sessionStorage.getItem("loggedOut") === "true";
-        if (!isLoggedOut) {
+        if (import.meta.env.DEV && !isLoggedOut) {
           const mockUser = {
             uid: "user_sarthak_001",
             email: "sarthak@example.com",
