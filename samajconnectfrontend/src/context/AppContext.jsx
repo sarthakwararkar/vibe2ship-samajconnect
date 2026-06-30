@@ -163,6 +163,18 @@ export function AppProvider({ children }) {
               
               const formatted = parts.length > 0 ? parts.join(", ") : data.display_name;
               setExactAddress(formatted);
+
+              const city = addr.city || addr.town || addr.village || addr.municipality || addr.suburb;
+              if (city) {
+                setDetectedCity(city);
+                // Also update fallback aqiData city name if it was set to default Latur
+                setAqiData(prev => {
+                  if (prev && prev.city === "Latur") {
+                    return { ...prev, city: city };
+                  }
+                  return prev;
+                });
+              }
             }
           } catch (e) {
             console.warn("Failed to reverse geocode exact address:", e);

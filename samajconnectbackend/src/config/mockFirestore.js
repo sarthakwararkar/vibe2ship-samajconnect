@@ -1,9 +1,32 @@
 const fs = require("fs");
 const path = require("path");
 
+const SOURCE_DB_DIR = path.join(__dirname, "../../db_local");
 const DB_DIR = process.env.NODE_ENV === "production" 
   ? "/tmp/db_local" 
-  : path.join(__dirname, "../../db_local");
+  : SOURCE_DB_DIR;
+
+// Seed production tmp database from repository db_local if not already done
+if (process.env.NODE_ENV === "production") {
+  try {
+    if (!fs.existsSync(DB_DIR)) {
+      fs.mkdirSync(DB_DIR, { recursive: true });
+    }
+    if (fs.existsSync(SOURCE_DB_DIR)) {
+      const files = fs.readdirSync(SOURCE_DB_DIR);
+      files.forEach(file => {
+        const srcPath = path.join(SOURCE_DB_DIR, file);
+        const destPath = path.join(DB_DIR, file);
+        if (!fs.existsSync(destPath) && file.endsWith(".json")) {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      });
+      console.log("🔥 [SamajConnect] Successfully seeded production /tmp/db_local from source db_local!");
+    }
+  } catch (err) {
+    console.error("⚠️ [SamajConnect] Failed to seed production database:", err.message);
+  }
+}
 
 // Helper to read JSON file
 function readData(collection) {
