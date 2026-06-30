@@ -28,18 +28,33 @@ function parseGeminiJSON(text) {
 
 async function callWithFallback(prompt, isMultimodal = false, imageBase64 = null, mimeType = "image/jpeg") {
   const models = isMultimodal 
-    ? ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro-vision"]
-    : ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
+    ? ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro-vision"]
+    : ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
     
   let lastError = null;
+  let cleanImageBase64 = null;
+  let detectedMimeType = mimeType;
+
+  if (isMultimodal && imageBase64) {
+    const match = imageBase64.match(/^data:([^;]+);base64,(.*)$/);
+    if (match) {
+      detectedMimeType = match[1];
+      cleanImageBase64 = match[2];
+    } else {
+      cleanImageBase64 = imageBase64.includes("base64,")
+        ? imageBase64.split("base64,")[1]
+        : imageBase64;
+    }
+  }
+
   for (const modelName of models) {
     try {
       const modelInstance = genAI.getGenerativeModel({ model: modelName });
       let result;
-      if (isMultimodal && imageBase64) {
+      if (isMultimodal && cleanImageBase64) {
         result = await modelInstance.generateContent([
           { text: prompt },
-          { inlineData: { mimeType, data: imageBase64 } }
+          { inlineData: { mimeType: detectedMimeType, data: cleanImageBase64 } }
         ]);
       } else {
         result = await modelInstance.generateContent(prompt);
