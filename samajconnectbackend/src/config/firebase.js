@@ -12,12 +12,16 @@ let auth;
 let storage;
 let FieldValue;
 let Timestamp;
+let dbMode = "live";
+let dbError = null;
 
 // Use mock Firestore in development or when explicitly enabled
 const useMock = process.env.USE_MOCK_FIRESTORE === "true" || process.env.NODE_ENV === "development";
 
 if (useMock) {
   console.log("🔥 [SamajConnect] Using local JSON file mock database...");
+  dbMode = "mock";
+  dbError = "USE_MOCK_FIRESTORE enabled or NODE_ENV is development";
   const mock = require("./mockFirestore");
   db = mock.db;
   FieldValue = mock.FieldValue;
@@ -70,6 +74,8 @@ if (useMock) {
     console.log("🔥 [SamajConnect] Successfully connected to live Firebase / Firestore database!");
   } catch (err) {
     console.warn("⚠️ [SamajConnect] Live Firebase initialization failed, falling back to mock database:", err.message);
+    dbMode = "mock";
+    dbError = err.message;
     const mock = require("./mockFirestore");
     db = mock.db;
     FieldValue = mock.FieldValue;
@@ -95,6 +101,6 @@ if (useMock) {
   }
 }
 
-module.exports = { admin, db, auth, storage, FieldValue, Timestamp };
+module.exports = { admin, db, auth, storage, FieldValue, Timestamp, dbMode, dbError };
 
 

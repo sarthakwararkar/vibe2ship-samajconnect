@@ -83,12 +83,17 @@ app.use(express.static(path.join(__dirname, "../public/dist")));
 app.use("/api/", apiLimiter);
 
 // Health check (no auth, no rate limit)
-app.get("/health", (req, res) => res.json({
-  status: "ok",
-  app: "SamajConnect",
-  version: "1.0.0",
-  timestamp: new Date().toISOString()
-}));
+app.get("/health", (req, res) => {
+  const { dbMode, dbError } = require("./config/firebase");
+  res.json({
+    status: "ok",
+    app: "SamajConnect",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
+    dbMode,
+    dbError
+  });
+});
 
 // Routes
 app.use("/api/auth",        require("./routes/auth.routes"));
