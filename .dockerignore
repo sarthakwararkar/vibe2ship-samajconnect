@@ -1,7 +1,6 @@
 node_modules
 samajconnectbackend/node_modules
 samajconnectfrontend/node_modules
-samajconnectbackend/db_local
 samajconnectbackend/public/uploads
 dist
 samajconnectfrontend/dist

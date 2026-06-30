@@ -4,5 +4,4 @@ npm-debug.log
 .env.local
 .git
 .gitignore
-db_local
 mock_key.pem

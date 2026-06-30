@@ -2,7 +2,7 @@ module.exports = (err, req, res, next) => {
   console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);
 
   // Firestore errors
-  if (err.code?.startsWith("firestore/")) {
+  if (typeof err.code === "string" && err.code.startsWith("firestore/")) {
     return res.status(500).json({ error: "Database error", code: err.code });
   }
 
