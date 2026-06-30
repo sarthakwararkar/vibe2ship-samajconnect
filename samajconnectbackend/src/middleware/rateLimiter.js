@@ -3,7 +3,7 @@ const rateLimit = require("express-rate-limit");
 // General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === "development" ? 10000 : 100,
+  max: process.env.NODE_ENV === "development" ? 10000 : 2000,
   message: { error: "Too many requests", code: "RATE_LIMITED" }
 });
 
