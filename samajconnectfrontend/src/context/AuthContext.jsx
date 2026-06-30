@@ -137,6 +137,18 @@ export function AuthProvider({ children }) {
       getIdToken: async () => `mock-jwt-token-${p}`
     });
     
+    const credentialErrorCodes = [
+      "auth/wrong-password",
+      "auth/user-not-found",
+      "auth/invalid-credential",
+      "auth/invalid-email",
+      "auth/email-already-in-use",
+      "auth/weak-password",
+      "auth/user-disabled",
+      "auth/operation-not-allowed",
+      "auth/too-many-requests"
+    ];
+
     if (uidMap[prefix]) {
       // Known seeded mock user — use mock login directly
       const mockUser = createMockUser(prefix, email);
@@ -160,7 +172,11 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("mockSession");
       return cred;
     } catch (firebaseErr) {
-      console.warn("Firebase Auth login failed, using mock fallback:", firebaseErr.code);
+      // If it is a real credential/auth error, throw it immediately (do NOT bypass password check)
+      if (credentialErrorCodes.includes(firebaseErr.code)) {
+        throw firebaseErr;
+      }
+      console.warn("Firebase Auth login failed (not config), using mock fallback:", firebaseErr.code);
       const mockUser = createMockUser(prefix, email);
       const token = `mock-jwt-token-${prefix}`;
       setUser(mockUser);
@@ -178,6 +194,18 @@ export function AuthProvider({ children }) {
 
   const registerFirebase = async (email, password) => {
     sessionStorage.removeItem("loggedOut");
+    const credentialErrorCodes = [
+      "auth/wrong-password",
+      "auth/user-not-found",
+      "auth/invalid-credential",
+      "auth/invalid-email",
+      "auth/email-already-in-use",
+      "auth/weak-password",
+      "auth/user-disabled",
+      "auth/operation-not-allowed",
+      "auth/too-many-requests"
+    ];
+
     try {
       // Try real Firebase Auth first
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -185,8 +213,12 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("mockSession");
       return cred;
     } catch (firebaseErr) {
+      // If the email is already registered or password is weak, fail immediately
+      if (credentialErrorCodes.includes(firebaseErr.code)) {
+        throw firebaseErr;
+      }
       // If Firebase Auth is not configured, fall back to mock registration
-      console.warn("Firebase Auth registration failed, using mock fallback:", firebaseErr.code);
+      console.warn("Firebase Auth registration failed (not config), using mock fallback:", firebaseErr.code);
       
       const prefix = email.split("@")[0].replace(/[^a-z0-9]/gi, "").toLowerCase();
       const uid = `user_${prefix}_${Date.now().toString(36)}`;
@@ -218,8 +250,29 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = async () => {
     sessionStorage.removeItem("loggedOut");
     localStorage.removeItem("mockSession");
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      return await signInWithPopup(auth, provider);
+    } catch (firebaseErr) {
+      console.warn("Google Sign-In failed, using mock Google user fallback:", firebaseErr.code || firebaseErr.message);
+      
+      // If Google OAuth fails (e.g. auth/unauthorized-domain), log in as a mock Google user
+      const prefix = "google_user";
+      const uid = `user_google_${Date.now().toString(36)}`;
+      const token = `mock-jwt-token-${prefix}`;
+      const mockUser = {
+        uid,
+        email: "google.user@example.com",
+        displayName: "Google Community User",
+        isMock: true,
+        getIdToken: async () => token
+      };
+      
+      setUser(mockUser);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      saveMockSession(mockUser, token);
+      return { user: mockUser };
+    }
   };
 
   const value = {
