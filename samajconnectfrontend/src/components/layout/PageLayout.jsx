@@ -1,22 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import NotificationPanel from "./NotificationPanel";
 
 export default function PageLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen flex text-primary">
-      {/* Fixed Sidebar */}
-      <Sidebar />
+      {/* Fixed/Drawer Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Page Area */}
-      <div className="flex-1 pl-[240px]">
+      <div className="flex-1 pl-0 lg:pl-[240px]">
         {/* Fixed Topbar */}
-        <TopBar />
+        <TopBar onToggleSidebar={() => setSidebarOpen(true)} />
 
         {/* Scrollable Page Body */}
-        <main className="pt-[60px] p-8 min-h-screen">
+        <main className="pt-[60px] p-4 lg:p-8 min-h-screen">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}

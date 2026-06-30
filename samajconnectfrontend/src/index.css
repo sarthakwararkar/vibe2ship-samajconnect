@@ -57,7 +57,12 @@ body {
   font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
-  min-width: 1024px; /* Desktop only constraints */
+}
+
+@media (min-width: 1024px) {
+  body {
+    min-width: 1024px; /* Desktop only constraints */
+  }
 }
 
 /* ── Glass utilities ────────────────────────────────────── */

@@ -174,7 +174,7 @@ export default function Leaderboard() {
 
           {/* Sticky My Rank widget */}
           {user && (
-            <div className="fixed bottom-0 left-[240px] right-0 px-6 py-4 glass-elevated border-t border-white/20 bg-white/95 z-20 shadow-xl flex justify-between items-center max-w-[900px] mx-auto rounded-t-3xl">
+            <div className="fixed bottom-0 left-0 lg:left-[240px] right-0 px-6 py-4 glass-elevated border-t border-white/20 bg-white/95 z-20 shadow-xl flex justify-between items-center max-w-[900px] mx-auto rounded-t-3xl">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
                   #{myRank}

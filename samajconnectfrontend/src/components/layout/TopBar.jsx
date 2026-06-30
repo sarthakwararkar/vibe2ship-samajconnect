@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { Bell, Search, LogOut, User, Settings, Wind, MapPin } from "lucide-react";
+import { Bell, Search, LogOut, User, Settings, Wind, MapPin, Menu } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { AppContext } from "../../context/AppContext";
 import Avatar from "../ui/Avatar";
 import { getAqiColor } from "../../utils/formatters";
 import toast from "react-hot-toast";
 
-export default function TopBar() {
+export default function TopBar({ onToggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, logout } = useAuth();
@@ -76,12 +76,23 @@ export default function TopBar() {
   const isHighAqi = currentAqi > 150;
 
   return (
-    <header className="h-[60px] fixed top-0 right-0 left-[240px] glass-elevated rounded-none border-b border-white/20 flex items-center justify-between px-6 z-30 bg-white/55">
-      {/* Title */}
-      <h2 className="text-xl font-bold font-display text-primary">{getPageTitle()}</h2>
+    <header className="h-[60px] fixed top-0 right-0 left-0 lg:left-[240px] glass-elevated rounded-none border-b border-white/20 flex items-center justify-between px-4 lg:px-6 z-30 bg-white/55">
+      {/* Left side: Hamburger + Title */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        <button
+          onClick={onToggleSidebar}
+          className="p-1.5 rounded-xl hover:bg-white/20 text-muted hover:text-primary lg:hidden cursor-pointer flex-shrink-0"
+          title="Open Menu"
+        >
+          <Menu size={20} />
+        </button>
+        <h2 className="text-sm sm:text-base lg:text-xl font-bold font-display text-primary truncate leading-none">
+          {getPageTitle()}
+        </h2>
+      </div>
 
       {/* Global Search Bar */}
-      <div className="relative w-[380px]">
+      <div className="relative w-[380px] hidden md:block">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
@@ -130,11 +141,11 @@ export default function TopBar() {
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
         {/* Geolocation/City Pill */}
         <button 
           onClick={requestUserLocation}
-          className="flex items-center gap-1.5 px-3 py-1.5 glass border border-white/40 bg-white/60 text-primary rounded-xl hover:border-indigo-400 cursor-pointer select-none transition-all"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 glass border border-white/40 bg-white/60 text-primary rounded-xl hover:border-indigo-400 cursor-pointer select-none transition-all"
           title="Click to request or refresh location permission"
         >
           <MapPin size={15} className="text-indigo-600 animate-pulse" style={{ animationDuration: '3s' }} />
@@ -144,7 +155,7 @@ export default function TopBar() {
         {/* AQI Pill */}
         <Link 
           to="/aqi" 
-          className={`flex items-center gap-1.5 px-3 py-1.5 glass border rounded-xl hover:border-indigo-400 cursor-pointer select-none transition-all ${
+          className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 glass border rounded-xl hover:border-indigo-400 cursor-pointer select-none transition-all ${
             isHighAqi ? "sos-pulse shadow-md border-red-500 bg-red-50 text-red-700" : "bg-white/60 border-white/40 text-primary"
           }`}
         >
