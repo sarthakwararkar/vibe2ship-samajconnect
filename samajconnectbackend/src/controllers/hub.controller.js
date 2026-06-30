@@ -479,6 +479,22 @@ async function getCategories(req, res, next) {
   }
 }
 
+/**
+ * POST /api/hub/ai-category — Categorize a community question.
+ */
+async function getAiCategory(req, res, next) {
+  try {
+    const { title, body } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: "title is required", code: "MISSING_TITLE" });
+    }
+    const aiCategory = await geminiService.categorizeQuestion(title, body || "");
+    res.json(aiCategory);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   createQuestion,
   listQuestions,
@@ -489,5 +505,6 @@ module.exports = {
   upvoteAnswer,
   searchQuestions,
   listExperts,
-  getCategories
+  getCategories,
+  getAiCategory
 };

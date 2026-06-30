@@ -427,6 +427,22 @@ async function getIssueStats(req, res, next) {
   }
 }
 
+/**
+ * POST /api/issues/ai-classify — Classify a civic infrastructure issue image before submission.
+ */
+async function aiClassify(req, res, next) {
+  try {
+    const { photoBase64, description } = req.body;
+    if (!photoBase64) {
+      return res.status(400).json({ error: "photoBase64 is required", code: "MISSING_PHOTO" });
+    }
+    const aiResult = await geminiService.classifyIssue(description || "", photoBase64);
+    res.json(aiResult);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   createIssue,
   listIssues,
@@ -435,5 +451,6 @@ module.exports = {
   updateIssueStatus,
   resolveIssue,
   getNearbyIssues,
-  getIssueStats
+  getIssueStats,
+  aiClassify
 };

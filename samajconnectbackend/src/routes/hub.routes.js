@@ -12,6 +12,7 @@ router.get("/categories", hubController.getCategories);
 
 // Protected routes
 router.post("/questions", authMiddleware, aiLimiter, hubController.createQuestion);
+router.post("/ai-category", authMiddleware, aiLimiter, hubController.getAiCategory);
 router.post("/questions/:id/answers", authMiddleware, hubController.postAnswer);
 router.patch("/questions/:id/answers/:answerId/accept", authMiddleware, hubController.acceptAnswer);
 router.patch("/questions/:id/upvote", authMiddleware, hubController.upvoteQuestion);

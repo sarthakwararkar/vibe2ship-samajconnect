@@ -11,6 +11,7 @@ router.get("/:id", issuesController.getIssue);
 
 // Protected routes
 router.post("/", authMiddleware, aiLimiter, issuesController.createIssue);
+router.post("/ai-classify", authMiddleware, aiLimiter, issuesController.aiClassify);
 router.patch("/:id/upvote", authMiddleware, issuesController.upvoteIssue);
 router.patch("/:id/status", authMiddleware, issuesController.updateIssueStatus);
 router.post("/:id/resolve", authMiddleware, issuesController.resolveIssue);

@@ -1,60 +1,12 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import api from "./api";
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "mock-key");
-
-function parseJSON(text) {
-  try {
-    // strip markdown fence if any
-    const cleanText = text.replace(/```json\n?|```\n?/g, "").trim();
-    return JSON.parse(cleanText);
-  } catch (e) {
-    console.error("JSON parsing error on Gemini response:", text, e);
-    throw e;
-  }
-}
-
-// Helper to handle model fallback when a model is not found/supported in the API key's region or tier
-async function generateContentWithFallback(payload, isMultimodal = false) {
-  const models = isMultimodal 
-    ? ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro-vision"]
-    : ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
-    
-  let lastError = null;
-  for (const modelName of models) {
-    try {
-      const modelInstance = genAI.getGenerativeModel({ model: modelName });
-      const result = await modelInstance.generateContent(payload);
-      return result;
-    } catch (err) {
-      const msg = (err.message || "").toLowerCase();
-      if (msg.includes("not found") || msg.includes("404") || msg.includes("not supported") || msg.includes("unsupported")) {
-        console.warn(`Model ${modelName} failed or not found, trying fallback model...`, err.message);
-        lastError = err;
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastError;
-}
-
-// 1. Classify issue image in browser (base64 → category + severity)
+// 1. Classify issue image using backend (base64 → category + severity)
 export async function classifyIssueImage(base64, description = "", fileName = "") {
   try {
-    if (!import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY === "mock-gemini-key-xyz") {
-      throw new Error("Using mock key, bypass call");
-    }
-    // base64 contains the data url header like "data:image/jpeg;base64,...", strip it
-    const base64Data = base64.includes(";base64,") ? base64.split(";base64,")[1] : base64;
-    
-    const prompt = `You are an AI for a civic issue reporting platform in India. Analyze this image and description: "${description}". Return ONLY valid JSON: {"category":"pothole|water_leak|streetlight|waste|road_damage|other","severity":"low|medium|high|critical","confidence":0.9,"reason":"one sentence"}`;
-    const result = await generateContentWithFallback([
-      { text: prompt },
-      { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-    ], true);
-    return parseJSON(result.response.text());
+    const res = await api.post("/issues/ai-classify", { photoBase64: base64, description, fileName });
+    return res.data;
   } catch (err) {
-    console.warn("Gemini classifyIssueImage error, using fallback", err);
+    console.warn("Backend classifyIssueImage error, using fallback", err);
     // Enhanced local fallback logic based on description and filename
     let category = "other";
     const textToSearch = `${description} ${fileName}`.toLowerCase();
@@ -83,14 +35,10 @@ export async function classifyIssueImage(base64, description = "", fileName = ""
 // 2. Real-time question categorization as user types (debounced)
 export async function categorizeQuestion(title, body) {
   try {
-    if (!import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY === "mock-gemini-key-xyz") {
-      throw new Error("Using mock key, bypass call");
-    }
-    const prompt = `Categorize this community question for routing to the right expert in an Indian town. Title: "${title}" Body: "${body}". Return ONLY valid JSON: {"category":"agriculture|legal|medical|plumbing|electrical|education|financial|other","suggestedExpertType":"descriptive role","tags":["tag1","tag2"],"priority":"low|medium|high"}`;
-    const result = await generateContentWithFallback(prompt);
-    return parseJSON(result.response.text());
+    const res = await api.post("/hub/ai-category", { title, body });
+    return res.data;
   } catch (err) {
-    console.warn("Gemini categorizeQuestion error, using fallback", err);
+    console.warn("Backend categorizeQuestion error, using fallback", err);
     let category = "other";
     const text = (title + " " + body).toLowerCase();
     if (text.includes("crop") || text.includes("farm") || text.includes("plant") || text.includes("soil")) category = "agriculture";
@@ -111,14 +59,12 @@ export async function categorizeQuestion(title, body) {
 // 3. AI price suggestion for marketplace listing
 export async function suggestItemPrice(itemName, condition, category) {
   try {
-    if (!import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY === "mock-gemini-key-xyz") {
-      throw new Error("Using mock key, bypass call");
-    }
-    const prompt = `Suggest a fair second-hand price for a "${itemName}" in "${condition}" condition (category: "${category}") for a small Indian city (Latur, Maharashtra). Consider typical prices, not metro prices. Return ONLY valid JSON: {"minPrice":number,"maxPrice":number,"suggestedPrice":number,"currency":"INR"}`;
-    const result = await generateContentWithFallback(prompt);
-    return parseJSON(result.response.text());
+    const res = await api.get("/marketplace/ai-price", {
+      params: { item: itemName, condition, category }
+    });
+    return res.data.priceSuggestion;
   } catch (err) {
-    console.warn("Gemini suggestItemPrice error, using fallback", err);
+    console.warn("Backend suggestItemPrice error, using fallback", err);
     // Simple heuristic-based fallback pricing
     return { minPrice: 100, maxPrice: 500, suggestedPrice: 250, currency: "INR" };
   }
@@ -127,14 +73,10 @@ export async function suggestItemPrice(itemName, condition, category) {
 // 4. Health advice from AQI + symptoms (used on AQI dashboard)
 export async function getAqiHealthAdvice(aqi, pollutant, symptoms = []) {
   try {
-    if (!import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY === "mock-gemini-key-xyz") {
-      throw new Error("Using mock key, bypass call");
-    }
-    const prompt = `Public health advice for Indian citizens. AQI: ${aqi}, Pollutant: ${pollutant}, Symptoms: ${symptoms.join(", ") || "none"}. Return ONLY valid JSON: {"riskLevel":"low|moderate|high|severe","immediateAdvice":"one sentence","specialistType":"specialist or none","urgency":"routine|soon|urgent","tips":["tip1","tip2","tip3"]}`;
-    const result = await generateContentWithFallback(prompt);
-    return parseJSON(result.response.text());
+    const res = await api.post("/aqi/health-advice", { aqi, pollutant, symptoms });
+    return res.data.healthAdvice;
   } catch (err) {
-    console.warn("Gemini getAqiHealthAdvice error, using fallback", err);
+    console.warn("Backend getAqiHealthAdvice error, using fallback", err);
     
     const symptomList = (symptoms || []).map(s => s.toLowerCase());
     const hasSevere = symptomList.some(s => s.includes("breath") || s.includes("chest") || s.includes("tight"));
