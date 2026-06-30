@@ -42,14 +42,25 @@ if (useMock) {
   };
 } else {
   try {
-    if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccount.private_key) {
-      throw new Error("Missing or incomplete Firebase Admin SDK credentials in environment variables.");
-    }
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      });
+    if (process.env.NODE_ENV === "production") {
+      // In production (Cloud Run), use Application Default Credentials (ADC)
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          projectId: process.env.FIREBASE_PROJECT_ID || "samajconnet",
+          storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "samajconnet.firebasestorage.app"
+        });
+      }
+    } else {
+      // In development, require local service account credentials
+      if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccount.private_key) {
+        throw new Error("Missing or incomplete Firebase Admin SDK credentials in environment variables.");
+      }
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+        });
+      }
     }
     db = admin.firestore();
     auth = admin.auth();
