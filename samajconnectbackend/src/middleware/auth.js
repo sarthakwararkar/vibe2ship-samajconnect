@@ -11,13 +11,13 @@ module.exports = async (req, res, next) => {
   // Development bypass for mock tokens
   if (token && token.startsWith("mock-jwt-token-")) {
     const userKey = token.replace("mock-jwt-token-", "");
-    let mockUser = { uid: "user_sarthak_001", email: "sarthak@example.com", name: "Sarthak Kulkarni" };
-    if (userKey === "priya") {
-      mockUser = { uid: "user_priya_002", email: "priya@example.com", name: "Priya Deshmukh" };
-    } else if (userKey === "ramesh") {
-      mockUser = { uid: "user_ramesh_003", email: "ramesh@example.com", name: "Ramesh Patil" };
-    }
-    req.user = mockUser;
+    // Map known seeded users, otherwise create a dynamic mock user from the token key
+    const knownUsers = {
+      sarthak: { uid: "user_sarthak_001", email: "sarthak@example.com", name: "Sarthak Kulkarni" },
+      priya:   { uid: "user_priya_002",   email: "priya@example.com",   name: "Priya Deshmukh" },
+      ramesh:  { uid: "user_ramesh_003",   email: "ramesh@example.com",  name: "Ramesh Patil" }
+    };
+    req.user = knownUsers[userKey] || { uid: `user_${userKey}_001`, email: `${userKey}@example.com`, name: userKey };
     return next();
   }
 

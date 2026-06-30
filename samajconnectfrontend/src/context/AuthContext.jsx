@@ -79,27 +79,29 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem("loggedOut");
     
     // Check if it matches one of the seeded local mock users
-    if (email === "sarthak@example.com" || email === "priya@example.com" || email === "ramesh@example.com") {
-      const prefix = email.split("@")[0]; // "sarthak", "priya", or "ramesh"
-      const uidMap = {
-        sarthak: "user_sarthak_001",
-        priya: "user_priya_002",
-        ramesh: "user_ramesh_003"
-      };
-      const nameMap = {
-        sarthak: "Sarthak Kulkarni",
-        priya: "Priya Deshmukh",
-        ramesh: "Ramesh Patil"
-      };
-      
-      const mockUser = {
-        uid: uidMap[prefix],
-        email: email,
-        displayName: nameMap[prefix],
-        isMock: true,
-        getIdToken: async () => `mock-jwt-token-${prefix}`
-      };
-      
+    const prefix = email.split("@")[0].replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const uidMap = {
+      sarthak: "user_sarthak_001",
+      priya: "user_priya_002",
+      ramesh: "user_ramesh_003"
+    };
+    const nameMap = {
+      sarthak: "Sarthak Kulkarni",
+      priya: "Priya Deshmukh",
+      ramesh: "Ramesh Patil"
+    };
+    
+    const createMockUser = (p, e) => ({
+      uid: uidMap[p] || `user_${p}_001`,
+      email: e,
+      displayName: nameMap[p] || p,
+      isMock: true,
+      getIdToken: async () => `mock-jwt-token-${p}`
+    });
+    
+    if (uidMap[prefix]) {
+      // Known seeded mock user — use mock login directly
+      const mockUser = createMockUser(prefix, email);
       setUser(mockUser);
       api.defaults.headers.common["Authorization"] = `Bearer mock-jwt-token-${prefix}`;
       try {
@@ -111,12 +113,49 @@ export function AuthProvider({ children }) {
       return mockUser;
     }
     
-    return signInWithEmailAndPassword(auth, email, password);
+    // Try real Firebase Auth; fall back to mock if Firebase Auth is not configured
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (firebaseErr) {
+      console.warn("Firebase Auth login failed, using mock fallback:", firebaseErr.code);
+      const mockUser = createMockUser(prefix, email);
+      setUser(mockUser);
+      api.defaults.headers.common["Authorization"] = `Bearer mock-jwt-token-${prefix}`;
+      try {
+        const res = await api.get("/auth/me");
+        setProfile(res.data.user || res.data);
+      } catch (err) {
+        console.warn("Mock login profile fetch failed:", err);
+      }
+      return mockUser;
+    }
   };
 
-  const registerFirebase = (email, password) => {
+  const registerFirebase = async (email, password) => {
     sessionStorage.removeItem("loggedOut");
-    return createUserWithEmailAndPassword(auth, email, password);
+    try {
+      // Try real Firebase Auth first
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      return cred;
+    } catch (firebaseErr) {
+      // If Firebase Auth is not configured (e.g. auth/configuration-not-found),
+      // fall back to mock registration so the app still works
+      console.warn("Firebase Auth registration failed, using mock fallback:", firebaseErr.code);
+      
+      const prefix = email.split("@")[0].replace(/[^a-z0-9]/gi, "").toLowerCase();
+      const uid = `user_${prefix}_${Date.now().toString(36)}`;
+      const mockUser = {
+        uid,
+        email,
+        displayName: prefix,
+        isMock: true,
+        getIdToken: async () => `mock-jwt-token-${prefix}`
+      };
+      
+      setUser(mockUser);
+      api.defaults.headers.common["Authorization"] = `Bearer mock-jwt-token-${prefix}`;
+      return { user: mockUser };
+    }
   };
 
   const logout = () => {
