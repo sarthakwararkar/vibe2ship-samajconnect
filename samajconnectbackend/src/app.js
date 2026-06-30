@@ -49,7 +49,15 @@ app.use(helmet({
         "'self'",
         "'unsafe-inline'",
         "'unsafe-eval'",
-        "https://unpkg.com"
+        "https://unpkg.com",
+        "https://*.googleapis.com",
+        "https://*.firebaseapp.com",
+        "https://apis.google.com"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://*.firebaseapp.com",
+        "https://*.googleapis.com"
       ]
     }
   }

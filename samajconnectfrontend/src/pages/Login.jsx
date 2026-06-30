@@ -25,9 +25,29 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await login(email, password);
-      toast.success("Welcome back!");
-      navigate("/");
+      const loginResult = await login(email, password);
+      
+      // If it's a real Firebase user, verify if profile exists on backend
+      if (loginResult && !loginResult.isMock) {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        try {
+          const profileRes = await api.get("/auth/me");
+          setProfile(profileRes.data.user || profileRes.data);
+          toast.success("Welcome back!");
+          navigate("/");
+        } catch (err) {
+          if (err.response?.status === 404) {
+            toast.success("Account authenticated. Please complete your registration details.");
+            navigate("/register", { state: { email: email, googleUid: loginResult.user.uid } });
+          } else {
+            toast.success("Welcome back!");
+            navigate("/");
+          }
+        }
+      } else {
+        toast.success("Welcome back!");
+        navigate("/");
+      }
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Invalid email or password");
