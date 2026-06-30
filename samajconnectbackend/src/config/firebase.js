@@ -15,8 +15,8 @@ let Timestamp;
 let dbMode = "live";
 let dbError = null;
 
-// Use mock Firestore in development or when explicitly enabled
-const useMock = process.env.USE_MOCK_FIRESTORE === "true" || process.env.NODE_ENV === "development";
+const isCloudRun = !!process.env.K_SERVICE;
+const useMock = process.env.USE_MOCK_FIRESTORE === "true" || (process.env.NODE_ENV === "development" && !isCloudRun);
 
 if (useMock) {
   console.log("🔥 [SamajConnect] Using local JSON file mock database...");
