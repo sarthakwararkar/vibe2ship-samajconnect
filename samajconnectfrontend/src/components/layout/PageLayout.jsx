@@ -18,7 +18,7 @@ export default function PageLayout({ children }) {
         <TopBar onToggleSidebar={() => setSidebarOpen(true)} />
 
         {/* Scrollable Page Body */}
-        <main className="pt-[60px] p-4 lg:p-8 min-h-screen">
+        <main className="pt-[76px] pb-4 px-4 lg:pt-[92px] lg:pb-8 lg:px-8 min-h-screen">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
